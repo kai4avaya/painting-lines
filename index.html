@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hatched Line Landscape — Continuous Scene, Two Frames</title>
+  <link rel="icon" type="image/png" href="lines.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f6f6f6;
+    }
+    canvas {
+      /* remove outer border so panels feel continuous */
+      background: #fafafa;
+    }
+  
+    button#regen {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid #111;
+      background: #fafafa;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    button#regen:hover { background:#eee; }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <canvas id="c" width="980" height="600"></canvas>
+  <button id="regen" title="Regenerate" aria-label="Regenerate landscape">⟳</button>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const regenBtn = document.getElementById('regen');
+
+ctx.lineCap = 'round';
+ctx.strokeStyle = '#111';
+
+const GAP = 40;           // visual separation between frames
+const PANEL_W = (canvas.width - GAP) / 2;
+
+// strong randomness seed per draw
+let seed = Math.random() * 10000;
+
+function clear() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function hatchRegion(clipFn, spacing, weight, passes, jitter) {
+  ctx.save();
+  ctx.beginPath();
+  clipFn();
+  ctx.clip();
+
+  for (let p = 0; p < passes; p++) {
+    ctx.lineWidth = weight * (1 + Math.random() * 0.4);
+    for (let x = -200; x < canvas.width + 200; x += spacing) {
+      ctx.beginPath();
+      const wobble = (Math.random() - 0.5) * jitter;
+      ctx.moveTo(x + wobble, -50);
+      ctx.lineTo(x + wobble, canvas.height + 50);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // === PANEL BORDERS (thin black) ===
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 0.75;
+  ctx.strokeRect(0.5, 0.5, PANEL_W-1, canvas.height-1);
+  ctx.strokeRect(PANEL_W + GAP + 0.5, 0.5, PANEL_W-1, canvas.height-1);
+}
+
+// === CONTINUOUS LANDSCAPE SHAPES (ONE SCENE) ===
+
+function skyPath() {
+  ctx.rect(0, 0, canvas.width, 180);
+}
+
+function farHillsPath() {
+  const a = 180 + Math.random()*120;
+  const b = 220 + Math.random()*120;
+  ctx.moveTo(0, a);
+  ctx.bezierCurveTo(160, a-40, 320, b, 480, a+10);
+  ctx.bezierCurveTo(640, a-30, 800, b+20, 980, a);
+  ctx.lineTo(980, a+90);
+  ctx.lineTo(0, a+90);
+}
+
+function midHillsPath() {
+  const a = 300 + Math.random()*80;
+  const b = 340 + Math.random()*120;
+  ctx.moveTo(0, a);
+  ctx.bezierCurveTo(180, b-40, 360, a+60, 540, b);
+  ctx.bezierCurveTo(720, a+40, 860, b+80, 980, b);
+  ctx.lineTo(980, b+80);
+  ctx.lineTo(0, b+80);
+}
+
+function riverPath() {
+  ctx.moveTo(0, 340);
+  ctx.bezierCurveTo(220, 360, 420, 390, 620, 420);
+  ctx.lineTo(620, 450);
+  ctx.bezierCurveTo(420, 430, 220, 410, 0, 400);
+}
+
+function nearLandPath() {
+  const a = 360 + Math.random()*120;
+  const b = 480 + Math.random()*160;
+  ctx.moveTo(0, a);
+  ctx.bezierCurveTo(200, b-80, 420, a+120, 640, b);
+  ctx.bezierCurveTo(800, b+120, 900, b+160, 980, 600);
+  ctx.lineTo(980, 600);
+  ctx.lineTo(0, 600);
+}
+
+// === DRAW FULL CONTINUOUS SCENE ===
+function draw() {
+  seed = Math.random()*10000;
+  clear();
+
+  hatchRegion(skyPath, 14, 0.8, 1, 0.4);
+  hatchRegion(farHillsPath, 8, 1.2, 2, 0.9);
+  hatchRegion(midHillsPath, 6, 1.6, 3, 1.0);
+
+  // River cut
+  ctx.fillStyle = '#fafafa';
+  ctx.beginPath();
+  riverPath();
+  ctx.closePath();
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Foreground land
+  hatchRegion(nearLandPath, 3, 2.4, 4, 1.6);
+  hatchRegion(nearLandPath, 6, 1.6, 2, 1.2);
+
+  // === FRAME MASKS (CUT INTO TWO PANELS, NO TOP/BOTTOM BORDERS) ===
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.beginPath();
+  ctx.rect(0, 0, PANEL_W, canvas.height);
+  ctx.rect(PANEL_W + GAP, 0, PANEL_W, canvas.height);
+  ctx.fill();
+  ctx.restore();
+}
+
+// initial render
+draw();
+
+// regenerate button
+regenBtn.onclick = draw;
+
+
+
+</script>
+</body>
+</html>
+
