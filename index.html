@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Hatched Line Landscape — Continuous Scene, Two Frames</title>
-  <link rel="icon" type="image/png" href="lines.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -84,17 +83,31 @@ function hatchRegion(clipFn, spacing, weight, passes, jitter) {
 // === CONTINUOUS LANDSCAPE SHAPES (ONE SCENE) ===
 
 function skyPath() {
-  ctx.rect(0, 0, canvas.width, 180);
+  // sky now subtly undulates so top hatching changes every time
+  const h = 140 + Math.random()*80;
+  ctx.moveTo(0,0);
+  ctx.lineTo(980,0);
+  ctx.lineTo(980,h);
+  ctx.bezierCurveTo(720,h+Math.random()*40,260,h-Math.random()*40,0,h);
+  ctx.closePath();
 }
 
 function farHillsPath() {
-  const a = 180 + Math.random()*120;
-  const b = 220 + Math.random()*120;
-  ctx.moveTo(0, a);
-  ctx.bezierCurveTo(160, a-40, 320, b, 480, a+10);
-  ctx.bezierCurveTo(640, a-30, 800, b+20, 980, a);
-  ctx.lineTo(980, a+90);
-  ctx.lineTo(0, a+90);
+  const base = 170 + Math.random()*140;
+  ctx.moveTo(0, base);
+  ctx.bezierCurveTo(
+    160, base - 80 + Math.random()*120,
+    360, base + Math.random()*120,
+    520, base - 40 + Math.random()*80
+  );
+  ctx.bezierCurveTo(
+    700, base + Math.random()*140,
+    840, base - 60 + Math.random()*100,
+    980, base + Math.random()*40
+  );
+  ctx.lineTo(980, base + 120);
+  ctx.lineTo(0, base + 120);
+  ctx.closePath();
 }
 
 function midHillsPath() {
@@ -108,10 +121,36 @@ function midHillsPath() {
 }
 
 function riverPath() {
-  ctx.moveTo(0, 340);
-  ctx.bezierCurveTo(220, 360, 420, 390, 620, 420);
-  ctx.lineTo(620, 450);
-  ctx.bezierCurveTo(420, 430, 220, 410, 0, 400);
+  // fully variable negative space: width, curvature, and position all change
+  const y0 = 300 + Math.random()*80;
+  const w1 = 20 + Math.random()*40;
+  const w2 = 60 + Math.random()*90;
+
+  ctx.moveTo(0, y0);
+  ctx.bezierCurveTo(
+    200, y0 + Math.random()*80,
+    420, y0 + 120 + Math.random()*120,
+    620, y0 + 180 + Math.random()*160
+  );
+  ctx.bezierCurveTo(
+    780, y0 + 240 + Math.random()*160,
+    880, y0 + 280 + Math.random()*200,
+    980, y0 + 320 + Math.random()*220
+  );
+
+  ctx.lineTo(980, y0 + 320 + w2);
+
+  ctx.bezierCurveTo(
+    880, y0 + 280 + w2 + Math.random()*80,
+    780, y0 + 240 + w2 + Math.random()*60,
+    620, y0 + 180 + w1
+  );
+  ctx.bezierCurveTo(
+    420, y0 + 120 + w1,
+    200, y0 + 40 + w1,
+    0, y0 + w1
+  );
+  ctx.closePath();
 }
 
 function nearLandPath() {
@@ -133,13 +172,13 @@ function draw() {
   hatchRegion(farHillsPath, 8, 1.2, 2, 0.9);
   hatchRegion(midHillsPath, 6, 1.6, 3, 1.0);
 
-  // River cut
+  // River cut (no hard rectangle)
   ctx.fillStyle = '#fafafa';
   ctx.beginPath();
   riverPath();
   ctx.closePath();
   ctx.fill();
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.8;
   ctx.stroke();
 
   // Foreground land
@@ -167,4 +206,3 @@ regenBtn.onclick = draw;
 </script>
 </body>
 </html>
-
